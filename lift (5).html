@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#0f0f0f">
+<title>LIFT</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f0f0f; --bg2:#1a1a1a; --bg3:#242424; --bg4:#2e2e2e;
+  --border:rgba(255,255,255,0.07); --border2:rgba(255,255,255,0.14);
+  --text:#f0ede8; --muted:#777; --muted2:#555;
+  --accent:#c8ff00; --accent-dim:rgba(200,255,0,0.1); --accent-dark:rgba(200,255,0,0.06);
+  --red:#ff4444; --red-dim:rgba(255,68,68,0.1);
+  --radius:12px; --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'DM Sans',sans-serif;overscroll-behavior:none;}
+
+/* ── AUTH ── */
+#auth-screen{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:32px 24px;gap:24px;}
+.auth-logo{font-family:'Bebas Neue',sans-serif;font-size:64px;letter-spacing:6px;color:var(--accent);line-height:1;}
+.auth-sub{font-size:14px;color:var(--muted);letter-spacing:.5px;margin-top:-16px;}
+.auth-card{background:var(--bg2);border:1px solid var(--border);border-radius:16px;padding:24px;width:100%;max-width:360px;}
+.auth-title{font-size:18px;font-weight:500;margin-bottom:4px;}
+.auth-desc{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.5;}
+.auth-success{background:var(--accent-dim);border:1px solid rgba(200,255,0,.25);border-radius:10px;padding:16px;font-size:14px;color:var(--accent);text-align:center;line-height:1.5;}
+
+/* ── APP ── */
+#app{display:none;height:100vh;display:none;flex-direction:column;}
+#app.visible{display:flex;}
+
+/* NAV */
+nav{background:var(--bg);border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 16px;height:54px;flex-shrink:0;position:sticky;top:0;z-index:50;}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:3px;color:var(--accent);}
+.nav-tabs{display:flex;gap:2px;}
+.nav-tab{background:none;border:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:13px;padding:6px 11px;border-radius:7px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.nav-tab.active{background:var(--accent-dim);color:var(--accent);}
+.nav-user{font-size:12px;color:var(--muted);cursor:pointer;padding:4px 8px;border-radius:6px;border:1px solid var(--border);}
+.nav-user:hover{border-color:var(--border2);}
+
+/* SCROLL AREA */
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* PAGES */
+.page{display:none;padding:16px;max-width:600px;margin:0 auto;padding-bottom:80px;}
+.page.active{display:block;}
+
+/* TYPOGRAPHY */
+.page-heading{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1.5px;margin-bottom:16px;}
+.section-label{font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:10px;}
+
+/* CARDS */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:12px;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:var(--radius-sm);font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;transition:all .15s;padding:10px 16px;white-space:nowrap;}
+.btn-accent{background:var(--accent);color:#0f0f0f;}
+.btn-accent:active{opacity:.85;}
+.btn-ghost{background:var(--bg3);color:var(--text);border:1px solid var(--border);}
+.btn-ghost:active{background:var(--bg4);}
+.btn-danger{background:var(--red-dim);color:var(--red);border:1px solid rgba(255,68,68,.2);}
+.btn-sm{padding:7px 12px;font-size:13px;}
+.btn-xs{padding:5px 10px;font-size:12px;}
+.btn-full{width:100%;}
+.btn-icon{padding:8px;border-radius:8px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);cursor:pointer;font-size:15px;line-height:1;display:inline-flex;align-items:center;justify-content:center;}
+.btn-icon:active{background:var(--bg4);}
+
+/* FORMS */
+.form-group{margin-bottom:14px;}
+label.lbl{display:block;font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;}
+input[type=text],input[type=email],input[type=number],textarea,select{
+  width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);font-family:'DM Sans',sans-serif;font-size:15px;padding:10px 12px;outline:none;
+  transition:border-color .15s;-webkit-appearance:none;
+}
+input:focus,textarea:focus{border-color:var(--accent);}
+textarea{resize:vertical;min-height:110px;}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.form-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+
+/* PLANS LIST */
+.plan-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s;}
+.plan-item:active{border-color:var(--border2);}
+.plan-item-info{flex:1;min-width:0;}
+.plan-item-name{font-weight:500;font-size:15px;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.plan-item-meta{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;}
+.cat-badge{font-size:11px;padding:3px 8px;border-radius:20px;background:var(--bg3);border:1px solid var(--border);color:var(--muted);white-space:nowrap;}
+
+/* WORKOUT */
+.workout-top{text-align:center;padding:8px 0 20px;}
+.w-plan-name{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:2px;color:var(--accent);}
+.w-timer{font-family:'Bebas Neue',sans-serif;font-size:52px;color:var(--text);line-height:1;letter-spacing:2px;}
+.w-timer-lbl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+.progress-bar{height:3px;background:var(--bg3);border-radius:2px;margin:10px 0 6px;overflow:hidden;}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s;}
+.progress-meta{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+.progress-text{font-size:12px;color:var(--muted);}
+
+/* EXERCISE CARDS */
+.ex-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;transition:border-color .2s;}
+.ex-card.done{border-color:rgba(200,255,0,.28);}
+.ex-header{display:flex;align-items:center;gap:11px;padding:13px 14px;cursor:pointer;}
+.ex-check{width:26px;height:26px;border-radius:50%;border:2px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;}
+.ex-card.done .ex-check{background:var(--accent);border-color:var(--accent);}
+.check-icon{display:none;}
+.ex-card.done .check-icon{display:block;}
+.ex-name{font-size:15px;font-weight:500;flex:1;min-width:0;}
+.ex-card.done .ex-name{text-decoration:line-through;color:var(--muted);}
+.ex-meta{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);margin-top:2px;}
+.ex-chevron{color:var(--muted);font-size:16px;transition:transform .2s;}
+.ex-card.open .ex-chevron{transform:rotate(180deg);}
+.ex-body{display:none;padding:0 14px 14px;border-top:1px solid var(--border);}
+.ex-card.open .ex-body{display:block;padding-top:14px;}
+
+/* EXERCISE GIF */
+.ex-gif-wrap{border-radius:10px;overflow:hidden;background:var(--bg3);margin-bottom:14px;aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;position:relative;}
+.ex-gif-wrap img{width:100%;height:100%;object-fit:cover;border-radius:10px;}
+.ex-gif-placeholder{display:flex;flex-direction:column;align-items:center;gap:6px;color:var(--muted);font-size:13px;}
+.ex-gif-loader{width:24px;height:24px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+.ex-muscles{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+.muscle-tag{font-size:11px;padding:3px 9px;border-radius:20px;background:var(--accent-dim);border:1px solid rgba(200,255,0,.2);color:var(--accent);}
+.muscle-tag.secondary{background:var(--bg3);border-color:var(--border);color:var(--muted);}
+
+/* SERIES */
+.series-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(54px,1fr));gap:8px;margin-bottom:12px;}
+.serie-btn{height:54px;border-radius:9px;border:1px solid var(--border);background:var(--bg3);color:var(--muted);font-family:'Bebas Neue',sans-serif;font-size:20px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1px;}
+.serie-btn span{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);}
+.serie-btn.done{background:var(--accent-dim);border-color:rgba(200,255,0,.4);color:var(--accent);}
+.serie-btn.done span{color:rgba(200,255,0,.5);}
+
+/* REST TIMER OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.93);z-index:200;display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+.overlay.show{display:flex;}
+.ov-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:2px;}
+.ring-wrap{position:relative;width:190px;height:190px;margin:4px 0;}
+.ring-wrap svg{width:100%;height:100%;transform:rotate(-90deg);}
+.ring-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'Bebas Neue',sans-serif;font-size:64px;color:var(--accent);}
+.ov-btns{display:flex;gap:10px;margin-top:4px;}
+
+/* MODAL (import / edit) */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.82);z-index:300;display:none;align-items:flex-end;justify-content:center;}
+.modal.show{display:flex;}
+.modal-box{background:var(--bg2);border-radius:16px 16px 0 0;width:100%;max-width:600px;max-height:92vh;overflow-y:auto;padding:20px 16px 40px;border:1px solid var(--border);border-bottom:none;}
+.modal-title{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:1px;margin-bottom:14px;}
+
+/* HISTORY */
+.hist-item{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 16px;margin-bottom:10px;}
+.hist-date{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.hist-name{font-weight:500;font-size:15px;margin-bottom:6px;}
+.hist-stats{display:flex;gap:12px;flex-wrap:wrap;}
+.hist-stat{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);background:var(--bg3);padding:3px 8px;border-radius:6px;}
+
+/* CHIPS */
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;}
+.chip{background:var(--bg3);border:1px solid var(--border);border-radius:20px;padding:5px 13px;font-size:13px;color:var(--muted);cursor:pointer;transition:all .15s;}
+.chip.active{background:var(--accent-dim);border-color:rgba(200,255,0,.35);color:var(--accent);}
+
+/* DIVIDER */
+hr.div{border:none;border-top:1px solid var(--border);margin:14px 0;}
+
+/* EMPTY */
+.empty{text-align:center;padding:48px 24px;color:var(--muted);}
+.empty-icon{font-size:44px;margin-bottom:12px;}
+
+/* TOAST */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0f0f0f;padding:10px 20px;border-radius:20px;font-size:14px;font-weight:500;z-index:999;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+
+/* LOADER */
+.loader{display:inline-block;width:18px;height:18px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* EXERCISE ROW IN BUILDER */
+.ex-row{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:10px;}
+.ex-row-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.ex-row-num{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;}
+</style>
+</head>
+<body>
+
+<!-- AUTH -->
+<div id="auth-screen">
+  <div class="auth-logo">LIFT</div>
+  <div class="auth-sub">Tréninkový deník</div>
+  <div class="auth-card" id="auth-card">
+    <div class="auth-title">Přihlásit se</div>
+    <div class="auth-desc">Zadej svůj email a pošleme ti odkaz pro přihlášení. Žádné heslo.</div>
+    <div class="form-group">
+      <label class="lbl">Email</label>
+      <input type="email" id="auth-email" placeholder="tvuj@email.cz" autocomplete="email">
+    </div>
+    <button class="btn btn-accent btn-full" id="auth-btn" onclick="sendMagicLink()">Poslat odkaz →</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <nav>
+    <div class="nav-logo">LIFT</div>
+    <div class="nav-tabs">
+      <button class="nav-tab active" onclick="showPage('plans')">Plány</button>
+      <button class="nav-tab" onclick="showPage('workout')">Trénink</button>
+      <button class="nav-tab" onclick="showPage('history')">Historie</button>
+      <button class="nav-tab" onclick="showPage('add')">+ Přidat</button>
+    </div>
+  </nav>
+  <div class="scroll">
+    <!-- PLANS -->
+    <div class="page active" id="page-plans">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="page-heading" style="margin:0;">Moje plány</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="openModal('import-modal')">Import</button>
+          <button class="btn btn-ghost btn-sm" id="logout-btn" onclick="logout()">Odhlásit</button>
+        </div>
+      </div>
+      <div id="plans-list"><div class="empty"><div class="loader"></div></div></div>
+    </div>
+
+    <!-- WORKOUT -->
+    <div class="page" id="page-workout">
+      <div id="workout-content">
+        <div class="empty">
+          <div class="empty-icon">🏋️</div>
+          <div style="color:var(--muted);font-size:15px;">Vyber plán ze záložky Plány</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- HISTORY -->
+    <div class="page" id="page-history">
+      <div class="page-heading">Historie tréninků</div>
+      <div id="history-list"><div class="empty"><div class="loader"></div></div></div>
+    </div>
+
+    <!-- ADD PLAN -->
+    <div class="page" id="page-add">
+      <div class="page-heading">Nový plán</div>
+      <div class="card">
+        <div class="form-group">
+          <label class="lbl">Název plánu</label>
+          <input type="text" id="plan-name" placeholder="např. Push A – hrudník & ramena">
+        </div>
+        <div class="form-group">
+          <label class="lbl">Kategorie</label>
+          <div class="chips" id="cat-chips">
+            <div class="chip active" onclick="pickCat(this)">Push</div>
+            <div class="chip" onclick="pickCat(this)">Pull</div>
+            <div class="chip" onclick="pickCat(this)">Legs</div>
+            <div class="chip" onclick="pickCat(this)">Full body</div>
+            <div class="chip" onclick="pickCat(this)">Cardio</div>
+            <div class="chip" onclick="pickCat(this)">Jiné</div>
+          </div>
+        </div>
+        <hr class="div">
+        <div class="section-label">Cviky</div>
+        <div id="ex-builder"></div>
+        <button class="btn btn-ghost btn-full" onclick="addExRow()" style="margin-bottom:16px;">+ Přidat cvik</button>
+        <button class="btn btn-accent btn-full" onclick="savePlan()">Uložit plán</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REST TIMER OVERLAY -->
+<div class="overlay" id="rest-overlay">
+  <div class="ov-label">Odpočinek</div>
+  <div class="ring-wrap">
+    <svg viewBox="0 0 190 190">
+      <circle cx="95" cy="95" r="82" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="8"/>
+      <circle cx="95" cy="95" r="82" fill="none" stroke="#c8ff00" stroke-width="8" stroke-linecap="round"
+        stroke-dasharray="515" stroke-dashoffset="0" id="ring-dash" style="transition:stroke-dashoffset .9s linear;"/>
+    </svg>
+    <div class="ring-num" id="ring-num">60</div>
+  </div>
+  <div class="ov-btns">
+    <button class="btn btn-ghost" onclick="adjRest(-15)">−15s</button>
+    <button class="btn btn-ghost" onclick="adjRest(15)">+15s</button>
+  </div>
+  <button class="btn btn-ghost" onclick="stopRest()" style="margin-top:4px;">Přeskočit ↗</button>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="modal" id="import-modal">
+  <div class="modal-box">
+    <div class="modal-title">Import z ChatGPT</div>
+    <div style="display:flex;gap:6px;margin-bottom:18px;">
+      <button class="btn btn-accent btn-sm" id="tab-json" onclick="switchImportTab('json')">JSON (doporučeno)</button>
+      <button class="btn btn-ghost btn-sm" id="tab-text" onclick="switchImportTab('text')">Volný text</button>
+    </div>
+    <div id="imp-json-tab">
+      <div style="background:var(--bg3);border-radius:10px;padding:13px;margin-bottom:12px;">
+        <div style="font-size:12px;color:var(--accent);font-weight:500;margin-bottom:8px;">Prompt pro ChatGPT – zkopíruj a vlož:</div>
+        <div id="prompt-text" style="font-size:11px;color:var(--text);line-height:1.8;font-family:monospace;word-break:break-all;">Vytvor mi treninkovy plan a vrat ho POUZE jako JSON v tomto formatu bez jakehokoliv dalsiho textu: {&quot;name&quot;:&quot;Nazev planu&quot;,&quot;category&quot;:&quot;Push&quot;,&quot;exercises&quot;:[{&quot;name&quot;:&quot;Bench Press&quot;,&quot;series&quot;:4,&quot;reps&quot;:&quot;8-10&quot;,&quot;weight&quot;:&quot;80 kg&quot;,&quot;rest&quot;:90,&quot;gifUrl&quot;:&quot;&quot;,&quot;muscles&quot;:[&quot;chest&quot;,&quot;triceps&quot;]}]}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm btn-full" onclick="copyPrompt()" style="margin-bottom:14px;">📋 Zkopírovat prompt</button>
+      <div class="form-group">
+        <label class="lbl">Vlož JSON z ChatGPT</label>
+        <textarea id="imp-json" placeholder='{"name":"Push A","category":"Push","exercises":[...]}' style="min-height:130px;font-family:monospace;font-size:12px;"></textarea>
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-accent" style="flex:1" onclick="doImportJson()">Importovat</button>
+        <button class="btn btn-ghost" onclick="closeModal('import-modal')">Zrušit</button>
+      </div>
+    </div>
+    <div id="imp-text-tab" style="display:none;">
+      <div class="form-group">
+        <label class="lbl">Název plánu</label>
+        <input type="text" id="imp-name" placeholder="např. PPL – Push day">
+      </div>
+      <div class="form-group">
+        <label class="lbl">Kategorie</label>
+        <div class="chips" id="imp-chips">
+          <div class="chip active" onclick="pickCat(this)">Push</div>
+          <div class="chip" onclick="pickCat(this)">Pull</div>
+          <div class="chip" onclick="pickCat(this)">Legs</div>
+          <div class="chip" onclick="pickCat(this)">Full body</div>
+          <div class="chip" onclick="pickCat(this)">Cardio</div>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="lbl">Text z ChatGPT</label>
+        <textarea id="imp-text" placeholder="Vlož sem celý tréninkový plán..."></textarea>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:11px 13px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.6;">
+        <strong style="color:var(--text);">Rozpoznávané formáty:</strong><br>
+        "Bench Press – 4×8" · "3 série × 10" · "4 sets of 12 reps"
+      </div>
+      <div style="display:flex;gap:10px;">
+        <button class="btn btn-accent" style="flex:1" onclick="doImport()">Importovat</button>
+        <button class="btn btn-ghost" onclick="closeModal('import-modal')">Zrušit</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+// ── CONFIG ──
+const SB_URL = 'https://doatyngtsexkgklpegth.supabase.co';
+const SB_KEY = 'sb_publishable_GF3PYeATOC4ovmbVamZV_Q_dUsE7SiX';
+const RAPID_KEY = 'b5a8a5938fmsh2c8b21bff24ef3fp1a064ajsn51ba5a865d45';
+const sb = supabase.createClient(SB_URL, SB_KEY);
+
+// ── EXERCISE CACHE (session) ──
+const exCache = {};
+
+async function fetchExerciseData(name){
+  const key = name.toLowerCase().trim();
+  if(exCache[key] !== undefined) return exCache[key];
+  try {
+    const res = await fetch(
+      `${SB_URL}/functions/v1/exercise-proxy?name=${encodeURIComponent(key)}`,
+      { headers: { 'Authorization': `Bearer ${SB_KEY}` } }
+    );
+    const data = await res.json();
+    if(data && data.length){
+      const ex = data[0];
+      exCache[key] = { gif: ex.gifUrl, target: ex.target, secondaryMuscles: ex.secondaryMuscles||[], equipment: ex.equipment };
+      return exCache[key];
+    }
+  } catch(e){}
+  exCache[key] = null;
+  return null;
+}
+
+// ── STATE ──
+let currentUser = null;
+let plans = [];
+let activePlan = null;
+let workoutId = null;
+let workoutState = {}; // {exIdx: {done, open, series:[{reps,weight,note}], note}}
+let totalSec = 0, totalInt = null;
+let restSec = 0, restTotal = 0, restInt = null;
+
+// ── UTILS ──
+function $(id){return document.getElementById(id);}
+function showToast(msg, dur=2200){
+  const t=$('toast'); t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), dur);
+}
+function fmt(s){return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');}
+function fmtDate(d){
+  return new Date(d).toLocaleDateString('cs-CZ',{day:'numeric',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit'});
+}
+
+// ── AUTH ──
+async function init(){
+  // Handle magic link token in URL (GitHub Pages neumi hash routing)
+  const hash = window.location.hash;
+  if(hash && hash.includes('access_token')){
+    // Supabase precte token z URL automaticky pres detectSessionFromUrl
+    const {data, error} = await sb.auth.getSessionFromUrl();
+    if(data?.session){
+      currentUser = data.session.user;
+      // Vycisti URL
+      history.replaceState(null,'', window.location.pathname);
+      showApp();
+      return;
+    }
+  }
+
+  // Zkus existujici session
+  const {data:{session}} = await sb.auth.getSession();
+  if(session){
+    currentUser = session.user;
+    showApp();
+  } else {
+    showAuth();
+  }
+
+  sb.auth.onAuthStateChange((_,session)=>{
+    if(session && !currentUser){ currentUser=session.user; showApp(); }
+    else if(!session && currentUser){ currentUser=null; showAuth(); }
+  });
+}
+
+async function sendMagicLink(){
+  const email = $('auth-email').value.trim();
+  if(!email){ showToast('Zadej email!'); return; }
+  $('auth-btn').innerHTML='<span class="loader"></span>';
+  $('auth-btn').disabled=true;
+  const redirectTo = 'https://vojtanooo.github.io/lift-app/';
+  const {error} = await sb.auth.signInWithOtp({email, options:{emailRedirectTo: redirectTo}});
+  if(error){ showToast('Chyba: '+error.message); $('auth-btn').textContent='Poslat odkaz →'; $('auth-btn').disabled=false; return; }
+  $('auth-card').innerHTML=`<div class="auth-success">📧 Odkaz odeslán na<br><strong>${email}</strong><br><br>Klikni na odkaz v emailu a budeš přihlášen.</div>`;
+}
+
+async function logout(){
+  await sb.auth.signOut();
+  currentUser=null;
+  showAuth();
+}
+
+function showAuth(){
+  $('app').classList.remove('visible');
+  $('auth-screen').style.display='flex';
+}
+function showApp(){
+  $('auth-screen').style.display='none';
+  $('app').classList.add('visible');
+  loadPlans();
+  showPage('plans');
+}
+
+// ── PAGES ──
+function showPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>el.classList.remove('active'));
+  $('page-'+p).classList.add('active');
+  const tabs=['plans','workout','history','add'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(p)]?.classList.add('active');
+  if(p==='plans') renderPlans();
+  if(p==='history') loadHistory();
+  if(p==='add') initBuilder();
+  if(p==='workout') renderWorkout();
+}
+
+// ── PLANS ──
+async function loadPlans(){
+  const {data,error} = await sb.from('plans').select('*, exercises(*)').order('created_at',{ascending:false});
+  if(error){ showToast('Chyba načítání'); return; }
+  plans = (data||[]).map(p=>({...p, exercises: (p.exercises||[]).sort((a,b)=>a.position-b.position)}));
+  renderPlans();
+}
+
+function renderPlans(){
+  const el=$('plans-list');
+  if(!plans.length){
+    el.innerHTML=`<div class="empty"><div class="empty-icon">📋</div><div style="color:var(--muted);font-size:15px;">Žádné plány. Přidej první!</div></div>`;
+    return;
+  }
+  el.innerHTML=plans.map((p,i)=>`
+    <div class="plan-item" onclick="startPlan(${i})">
+      <div class="plan-item-info">
+        <div class="plan-item-name">${p.name}</div>
+        <div class="plan-item-meta">${p.exercises.length} cviků</div>
+      </div>
+      <div class="cat-badge">${p.category||'Trénink'}</div>
+      <button class="btn-icon" onclick="event.stopPropagation();deletePlan('${p.id}',${i})">🗑</button>
+    </div>
+  `).join('');
+}
+
+async function deletePlan(id, i){
+  if(!confirm('Smazat plán?')) return;
+  await sb.from('plans').delete().eq('id',id);
+  plans.splice(i,1);
+  renderPlans();
+  showToast('Plán smazán');
+}
+
+// ── START WORKOUT ──
+function startPlan(i){
+  activePlan = plans[i];
+  workoutId = null;
+  workoutState = {};
+  totalSec = 0;
+  clearInterval(totalInt);
+  totalInt = setInterval(()=>{
+    totalSec++;
+    const el=document.getElementById('w-total-timer');
+    if(el) el.textContent=fmt(totalSec);
+  },1000);
+  showPage('workout');
+}
+
+// ── WORKOUT RENDER ──
+function renderWorkout(){
+  if(!activePlan){ $('workout-content').innerHTML=`<div class="empty"><div class="empty-icon">🏋️</div><div style="color:var(--muted);font-size:15px;">Vyber plán ze záložky Plány</div></div>`; return; }
+  const exs = activePlan.exercises;
+  const total = exs.length;
+  const done = exs.filter((_,i)=>workoutState[i]?.done).length;
+  const pct = total ? done/total*100 : 0;
+
+  $('workout-content').innerHTML=`
+    <div class="workout-top">
+      <div class="w-plan-name">${activePlan.name}</div>
+      <div class="w-timer" id="w-total-timer">${fmt(totalSec)}</div>
+      <div class="w-timer-lbl">Čas tréninku</div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="prog-fill" style="width:${pct}%"></div></div>
+    <div class="progress-meta">
+      <span class="progress-text">${done}/${total} cviků</span>
+      <button class="btn btn-ghost btn-xs" onclick="startRest(90)">⏱ Odpočinek</button>
+    </div>
+    ${exs.map((ex,i)=>renderEx(ex,i)).join('')}
+    <button class="btn btn-danger btn-full" style="margin-top:4px;" onclick="endWorkout()">Ukončit & uložit trénink</button>
+  `;
+  // restart timer display
+  clearInterval(totalInt);
+  totalInt = setInterval(()=>{ totalSec++; const el=document.getElementById('w-total-timer'); if(el) el.textContent=fmt(totalSec); },1000);
+}
+
+function renderEx(ex, i){
+  const ws = workoutState[i] || {};
+  const isDone = !!ws.done;
+  const isOpen = !!ws.open;
+  const seriesCount = parseInt(ex.series)||3;
+  const doneSeries = ws.series || [];
+  const cached = exCache[ex.name.toLowerCase().trim()];
+
+  const seriesBtns = Array.from({length:seriesCount},(_,s)=>{
+    const d = doneSeries.find(x=>x.n===s);
+    return `<button class="serie-btn ${d?'done':''}" onclick="toglSerie(${i},${s})">
+      ${s+1}${d&&d.weight?`<span>${d.weight}</span>`:''}
+    </button>`;
+  }).join('');
+
+  const gifContent = cached
+    ? (cached.gif ? `<img src="${cached.gif}" alt="${ex.name}" loading="lazy">` : `<div class="ex-gif-placeholder">Gif nenalezen</div>`)
+    : `<div class="ex-gif-placeholder"><div class="ex-gif-loader"></div><span>Načítám...</span></div>`;
+
+  const musclesContent = cached && cached.target
+    ? `<div class="ex-muscles" id="muscles-${i}">
+        <span class="muscle-tag">${cached.target}</span>
+        ${(cached.secondaryMuscles||[]).map(m=>`<span class="muscle-tag secondary">${m}</span>`).join('')}
+        ${cached.equipment?`<span class="muscle-tag secondary">🏋 ${cached.equipment}</span>`:''}
+      </div>`
+    : `<div class="ex-muscles" id="muscles-${i}"></div>`;
+
+  return `
+    <div class="ex-card ${isDone?'done':''} ${isOpen?'open':''}" id="ex-${i}">
+      <div class="ex-header" onclick="toglOpen(${i})">
+        <div class="ex-check" onclick="event.stopPropagation();toglDone(${i})">
+          <svg class="check-icon" width="12" height="9" viewBox="0 0 12 9" fill="none">
+            <path d="M1 4L4.5 7.5L11 1" stroke="#0f0f0f" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div class="ex-name">${ex.name}</div>
+          <div class="ex-meta">${seriesCount}×${ex.reps||'?'}${ex.weight?' · '+ex.weight:''}${ex.rest?' · '+ex.rest+'s':''}</div>
+        </div>
+        <span class="ex-chevron">▾</span>
+      </div>
+      <div class="ex-body">
+        <div class="ex-gif-wrap" id="gif-${i}">${gifContent}</div>
+        ${musclesContent}
+        <div class="section-label">Série – klepni pro odškrtnutí</div>
+        <div class="series-grid" id="sg-${i}">${seriesBtns}</div>
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button class="btn btn-ghost btn-sm" onclick="startRest(${ex.rest||90})">⏱ ${ex.rest||90}s pauza</button>
+        </div>
+        <hr class="div">
+        <div class="section-label">Váha / poznámka</div>
+        <input type="text" placeholder="např. 80 kg, úchop, poznámka..." value="${ws.note||''}"
+          oninput="setNote(${i},this.value)" style="font-size:14px;padding:9px 11px;">
+      </div>
+    </div>
+  `;
+}
+
+function toglOpen(i){
+  if(!workoutState[i]) workoutState[i]={};
+  workoutState[i].open = !workoutState[i].open;
+  renderWorkout();
+  // fetch gif if opening
+  if(workoutState[i].open){
+    const ex = activePlan.exercises[i];
+    const gifWrap = document.getElementById('gif-'+i);
+    if(gifWrap && !exCache[ex.name.toLowerCase().trim()]){
+      fetchExerciseData(ex.name).then(data=>{
+        const wrap = document.getElementById('gif-'+i);
+        if(!wrap) return;
+        if(data){
+          wrap.innerHTML = `<img src="${data.gif}" alt="${ex.name}" loading="lazy">`;
+          const muscleEl = document.getElementById('muscles-'+i);
+          if(muscleEl && (data.target || data.secondaryMuscles?.length)){
+            muscleEl.innerHTML =
+              (data.target ? `<span class="muscle-tag">${data.target}</span>` : '') +
+              (data.secondaryMuscles||[]).map(m=>`<span class="muscle-tag secondary">${m}</span>`).join('') +
+              (data.equipment ? `<span class="muscle-tag secondary">🏋 ${data.equipment}</span>` : '');
+          }
+        } else {
+          wrap.innerHTML = `<div class="ex-gif-placeholder">Gif nenalezen</div>`;
+        }
+      });
+    } else if(gifWrap && exCache[ex.name.toLowerCase().trim()]){
+      const data = exCache[ex.name.toLowerCase().trim()];
+      if(data) gifWrap.innerHTML = `<img src="${data.gif}" alt="${ex.name}" loading="lazy">`;
+    }
+  }
+}
+function toglDone(i){
+  if(!workoutState[i]) workoutState[i]={};
+  workoutState[i].done = !workoutState[i].done;
+  renderWorkout();
+}
+function toglSerie(i,s){
+  if(!workoutState[i]) workoutState[i]={};
+  if(!workoutState[i].series) workoutState[i].series=[];
+  const arr = workoutState[i].series;
+  const idx = arr.findIndex(x=>x.n===s);
+  if(idx===-1){
+    const note = workoutState[i].note||'';
+    arr.push({n:s, weight:note, reps:activePlan.exercises[i].reps||''});
+    startRest(activePlan.exercises[i].rest||90);
+  } else {
+    arr.splice(idx,1);
+  }
+  // re-render just serie grid
+  const ex = activePlan.exercises[i];
+  const seriesCount = parseInt(ex.series)||3;
+  const doneSeries = workoutState[i].series;
+  const grid = document.getElementById('sg-'+i);
+  if(grid) grid.innerHTML = Array.from({length:seriesCount},(_,ss)=>{
+    const d=doneSeries.find(x=>x.n===ss);
+    return `<button class="serie-btn ${d?'done':''}" onclick="toglSerie(${i},${ss})">${ss+1}${d&&d.weight?`<span>${d.weight}</span>`:''}</button>`;
+  }).join('');
+}
+function setNote(i,v){
+  if(!workoutState[i]) workoutState[i]={};
+  workoutState[i].note=v;
+}
+
+// ── END WORKOUT ──
+async function endWorkout(){
+  if(!confirm('Uložit a ukončit trénink?')) return;
+  clearInterval(totalInt);
+  const now = new Date().toISOString();
+  // Save workout record
+  const {data:wData,error:wErr} = await sb.from('workouts').insert({
+    user_id: currentUser.id,
+    plan_id: activePlan.id,
+    plan_name: activePlan.name,
+    duration_seconds: totalSec,
+    finished_at: now,
+  }).select().single();
+
+  if(!wErr && wData){
+    // Save sets
+    const sets=[];
+    activePlan.exercises.forEach((ex,i)=>{
+      const ws = workoutState[i];
+      if(!ws) return;
+      (ws.series||[]).forEach(s=>{
+        sets.push({workout_id:wData.id, exercise_name:ex.name, serie_num:s.n+1, reps:s.reps||'', weight:s.weight||'', note:ws.note||''});
+      });
+    });
+    if(sets.length) await sb.from('workout_sets').insert(sets);
+  }
+
+  activePlan=null; workoutState={}; totalSec=0;
+  showToast('Trénink uložen! 💪');
+  showPage('plans');
+}
+
+// ── HISTORY ──
+async function loadHistory(){
+  const {data,error} = await sb.from('workouts')
+    .select('*, workout_sets(*)')
+    .order('started_at',{ascending:false})
+    .limit(50);
+  if(error){ $('history-list').innerHTML='<div class="empty">Chyba načítání</div>'; return; }
+  if(!data||!data.length){ $('history-list').innerHTML=`<div class="empty"><div class="empty-icon">📅</div><div style="color:var(--muted);font-size:15px;">Zatím žádná historie</div></div>`; return; }
+  $('history-list').innerHTML = data.map(w=>{
+    const sets = w.workout_sets||[];
+    const exNames = [...new Set(sets.map(s=>s.exercise_name))];
+    const totalSets = sets.length;
+    return `
+      <div class="hist-item">
+        <div class="hist-date">${fmtDate(w.started_at)}</div>
+        <div class="hist-name">${w.plan_name}</div>
+        <div class="hist-stats">
+          <span class="hist-stat">⏱ ${fmt(w.duration_seconds||0)}</span>
+          <span class="hist-stat">${exNames.length} cviků</span>
+          <span class="hist-stat">${totalSets} sérií</span>
+        </div>
+        ${exNames.length ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);">${exNames.join(' · ')}</div>` : ''}
+      </div>
+    `;
+  }).join('');
+}
+
+// ── REST TIMER ──
+function startRest(sec){
+  clearInterval(restInt);
+  restTotal = sec; restSec = sec;
+  $('rest-overlay').classList.add('show');
+  updateRing();
+  restInt = setInterval(()=>{
+    restSec--;
+    if(restSec<=0){ stopRest(); showToast('Odpočinek hotov! 💪'); }
+    else updateRing();
+  },1000);
+}
+function updateRing(){
+  $('ring-num').textContent = restSec;
+  const offset = 515*(1-restSec/restTotal);
+  $('ring-dash').style.strokeDashoffset = offset;
+}
+function stopRest(){ clearInterval(restInt); $('rest-overlay').classList.remove('show'); }
+function adjRest(d){ restSec=Math.max(5,restSec+d); restTotal=Math.max(restTotal,restSec); updateRing(); }
+
+// ── ADD PLAN ──
+let exRows=[];
+function initBuilder(){
+  exRows=[];
+  $('plan-name').value='';
+  $('ex-builder').innerHTML='';
+  document.querySelectorAll('#cat-chips .chip').forEach((c,i)=>c.classList.toggle('active',i===0));
+  addExRow();
+}
+function pickCat(el){
+  el.closest('.chips').querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+}
+function addExRow(){
+  const id = Date.now();
+  exRows.push(id);
+  const n = exRows.length;
+  const div=document.createElement('div');
+  div.id='row-'+id; div.className='ex-row';
+  div.innerHTML=`
+    <div class="ex-row-head"><div class="ex-row-num">Cvik ${n}</div><button class="btn-icon" onclick="rmRow(${id})">✕</button></div>
+    <div class="form-group"><label class="lbl">Název</label><input type="text" placeholder="např. Bench Press" data-f="name"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="lbl">Série</label><input type="number" placeholder="4" data-f="series" min="1" max="30"></div>
+      <div class="form-group"><label class="lbl">Opakování</label><input type="text" placeholder="8–12" data-f="reps"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="lbl">Váha</label><input type="text" placeholder="80 kg" data-f="weight"></div>
+      <div class="form-group"><label class="lbl">Odpočinek (s)</label><input type="number" placeholder="90" data-f="rest" min="10"></div>
+    </div>
+  `;
+  $('ex-builder').appendChild(div);
+}
+function rmRow(id){ const el=document.getElementById('row-'+id); if(el) el.remove(); exRows=exRows.filter(r=>r!==id); }
+
+async function savePlan(){
+  const name = $('plan-name').value.trim();
+  if(!name){ showToast('Zadej název plánu!'); return; }
+  const cat = document.querySelector('#cat-chips .chip.active')?.textContent||'Trénink';
+  const exercises=[];
+  $('ex-builder').querySelectorAll('.ex-row').forEach((row,pos)=>{
+    const n = row.querySelector('[data-f="name"]')?.value.trim();
+    if(!n) return;
+    exercises.push({ name:n, series:parseInt(row.querySelector('[data-f="series"]')?.value)||3,
+      reps:row.querySelector('[data-f="reps"]')?.value||'10',
+      weight:row.querySelector('[data-f="weight"]')?.value||'',
+      rest:parseInt(row.querySelector('[data-f="rest"]')?.value)||90, position:pos });
+  });
+  if(!exercises.length){ showToast('Přidej alespoň 1 cvik!'); return; }
+  const btn=document.querySelector('#page-add .btn-accent');
+  btn.innerHTML='<span class="loader"></span>'; btn.disabled=true;
+  const {data:planData,error} = await sb.from('plans').insert({user_id:currentUser.id,name,category:cat}).select().single();
+  if(error){ showToast('Chyba uložení'); btn.textContent='Uložit plán'; btn.disabled=false; return; }
+  await sb.from('exercises').insert(exercises.map(e=>({...e,plan_id:planData.id})));
+  await loadPlans();
+  showToast('Plán uložen! ✅');
+  showPage('plans');
+}
+
+// ── IMPORT ──
+function openModal(id){ $(id).classList.add('show'); switchImportTab('json'); }
+function closeModal(id){ $(id).classList.remove('show'); }
+
+function switchImportTab(tab){
+  $('imp-json-tab').style.display = tab==='json' ? 'block' : 'none';
+  $('imp-text-tab').style.display = tab==='text' ? 'block' : 'none';
+  $('tab-json').className = 'btn btn-sm ' + (tab==='json' ? 'btn-accent' : 'btn-ghost');
+  $('tab-text').className = 'btn btn-sm ' + (tab==='text' ? 'btn-accent' : 'btn-ghost');
+}
+
+function copyPrompt(){
+  const prompt = `Vytvor mi treninkovy plan a vrat ho POUZE jako JSON v tomto presnem formatu bez jakehokoliv dalsiho textu, vysvetleni nebo markdown bloku:
+
+{"name":"Nazev planu","category":"Push","exercises":[{"name":"Bench Press","series":4,"reps":"8-10","weight":"80 kg","rest":90,"gifUrl":"","muscles":["chest","triceps"]}]}
+
+Pravidla:
+- category musi byt jedno z: Push, Pull, Legs, Full body, Cardio
+- series je cislo, reps je string (muze byt rozsah napr. "8-10")
+- rest je cas odpocinku v sekundach
+- gifUrl nech jako prazdny string ""
+- muscles je pole hlavnich svalovych skupin anglicky
+- Vrat POUZE cisty JSON, nic jineho`;
+  navigator.clipboard.writeText(prompt).then(()=>showToast('Prompt zkopirovan!')).catch(()=>showToast('Zkopiruj text rucne'));
+}
+
+async function doImportJson(){
+  const raw = $('imp-json').value.trim();
+  if(!raw){ showToast('Vloz JSON!'); return; }
+  let plan;
+  try {
+    const cleaned = raw.replace(/^```[a-z]*[\r\n]*/i,'').replace(/```\s*$/,'').trim();
+    plan = JSON.parse(cleaned);
+  } catch(e){ showToast('Chybny JSON format - zkus znovu'); return; }
+  if(!plan.name || !plan.exercises?.length){ showToast('JSON nema spravnou strukturu'); return; }
+  const {data:planData, error} = await sb.from('plans').insert({
+    user_id: currentUser.id, name: plan.name, category: plan.category || 'Trenink'
+  }).select().single();
+  if(error){ showToast('Chyba ulozeni'); return; }
+  const exercises = plan.exercises.map((e,i)=>({
+    plan_id: planData.id, name: e.name || 'Cvik',
+    series: parseInt(e.series)||3, reps: String(e.reps||'10'),
+    weight: e.weight||'', rest: parseInt(e.rest)||90, position: i
+  }));
+  await sb.from('exercises').insert(exercises);
+  await loadPlans();
+  closeModal('import-modal');
+  $('imp-json').value='';
+  showToast(`Importovano ${exercises.length} cviku!`);
+}
+
+function parseWorkout(text){
+  const lines=text.split('\n').map(l=>l.trim()).filter(l=>l);
+  const skip=['den','day','týden','week','program','trénink','workout','plán','plan','pondělí','úterý','středa','čtvrtek','pátek','sobota','neděle','monday','tuesday','wednesday','thursday','friday','saturday','sunday'];
+  const results=[];
+  for(const line of lines){
+    const clean=line.replace(/^\d+[\.\)]\s*/,'').replace(/^[-*•]\s*/,'').trim();
+    if(!clean||clean.length<3) continue;
+    if(skip.some(w=>clean.toLowerCase().startsWith(w))) continue;
+    if(/^#+/.test(clean)) continue;
+    const pats=[
+      /(\d+)\s*[x×\*]\s*([\d\-–]+)/i,
+      /(\d+)\s*sér[ií\w]*\s*[x×\*\-–]\s*([\d\-–]+)/i,
+      /(\d+)\s*sets?\s*(?:of|x|×)?\s*([\d\-–]+)/i,
+    ];
+    let series='',reps='',namePart=clean;
+    for(const pat of pats){
+      const m=clean.match(pat);
+      if(m){ series=m[1]; reps=m[2]; namePart=clean.replace(pat,'').replace(/[-–:,\s]+$/,'').trim(); break; }
+    }
+    if(!namePart||namePart.length<2) continue;
+    const wm=clean.match(/(\d+(?:[.,]\d+)?)\s*kg/i);
+    const rm=clean.match(/(\d+)\s*s(?:ec)?\s*(?:odpočin|rest)/i)||clean.match(/odpočin\w*\s*:?\s*(\d+)/i);
+    results.push({name:namePart, series:series||'3', reps:reps||'10', weight:wm?wm[1]+' kg':'', rest:rm?parseInt(rm[1]):90});
+  }
+  return results;
+}
+
+async function doImport(){
+  const name=$('imp-name').value.trim()||'Importovaný trénink';
+  const text=$('imp-text').value;
+  if(!text.trim()){ showToast('Vlož text!'); return; }
+  const cat=document.querySelector('#imp-chips .chip.active')?.textContent||'Trénink';
+  const exercises=parseWorkout(text);
+  if(!exercises.length){ showToast('Nepodařilo se najít cviky.'); return; }
+  const {data:planData,error}=await sb.from('plans').insert({user_id:currentUser.id,name,category:cat}).select().single();
+  if(error){ showToast('Chyba uložení'); return; }
+  await sb.from('exercises').insert(exercises.map((e,i)=>({...e,plan_id:planData.id,position:i})));
+  await loadPlans();
+  closeModal('import-modal');
+  $('imp-text').value='';
+  showToast(`Importováno ${exercises.length} cviků! ✅`);
+}
+
+// ── START ──
+init();
+</script>
+</body>
+</html>
